@@ -4,9 +4,12 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/lib/i18n/LanguageContext";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,24 +28,25 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password.");
+        setError(t.auth.invalidCredentials);
       } else {
         router.push("/dashboard");
         router.refresh();
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setError(t.auth.genericError);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border">
-      <h1 className="text-2xl font-bold text-center mb-2">Terra App</h1>
-      <p className="text-gray-500 text-center mb-8">
-        Sign in to your account
-      </p>
+    <div className="bg-white p-8 rounded-xl shadow-sm border relative">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+      <h1 className="text-2xl font-bold text-center mb-2">{t.common.appName}</h1>
+      <p className="text-gray-500 text-center mb-8">{t.auth.loginTitle}</p>
 
       {error && (
         <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm">
@@ -53,7 +57,7 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-1">
-            Email
+            {t.auth.email}
           </label>
           <input
             id="email"
@@ -68,7 +72,7 @@ export default function LoginPage() {
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium mb-1">
-            Password
+            {t.auth.password}
           </label>
           <input
             id="password"
@@ -86,14 +90,14 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-medium"
         >
-          {loading ? "Signing in..." : "Sign In"}
+          {loading ? t.auth.signingIn : t.auth.loginButton}
         </button>
       </form>
 
       <p className="text-center text-sm text-gray-500 mt-6">
-        Don&apos;t have an account?{" "}
+        {t.auth.noAccount}{" "}
         <Link href="/register" className="text-emerald-600 hover:underline">
-          Register
+          {t.common.register}
         </Link>
       </p>
     </div>

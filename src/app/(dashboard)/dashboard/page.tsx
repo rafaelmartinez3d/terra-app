@@ -1,50 +1,79 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { useT } from "@/lib/i18n/LanguageContext";
 
-export default async function DashboardPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+interface Property {
+  id: string;
+  code: string;
+  address: string;
+  areaM2: number;
+  costValue: number;
+  costCurrency: string;
+  updatedAt: string;
+  location: { city: string; state: string };
+  agent: { name: string };
+  images: { url: string }[];
+}
 
-  const properties = await prisma.property.findMany({
-    include: {
-      location: true,
-      agent: { select: { name: true } },
-      images: { take: 1, orderBy: { order: "asc" } },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+export default function DashboardPage() {
+  const { t } = useT();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/properties")
+      .then((r) => {
+        if (!r.ok) throw new Error("Unauthorized");
+        return r.json();
+      })
+      .then((data) => setProperties(data))
+      .catch(() => setProperties([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const count = properties.length;
+  const plural = count === 1 ? "y" : "ies";
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-bold">{t.dashboard.title}</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {properties.length} propert{properties.length === 1 ? "y" : "ies"} registered
+            {count}{" "}
+            {t.dashboard.propertiesCount
+              .replace("{count}", String(count))
+              .replace("{plural}", plural)}
           </p>
         </div>
         <Link
           href="/properties/new"
           className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 font-medium text-sm"
         >
-          + New Property
+          {t.dashboard.newProperty}
         </Link>
       </div>
 
-      {properties.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-20 text-gray-400">
+          {t.common.loading}
+        </div>
+      ) : properties.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-xl border">
           <p className="text-5xl mb-4">🗺️</p>
-          <h2 className="text-xl font-semibold mb-2">No properties yet</h2>
+          <h2 className="text-xl font-semibold mb-2">
+            {t.dashboard.noProperties}
+          </h2>
           <p className="text-gray-500 mb-6">
-            Start by adding your first land or plot.
+            {t.dashboard.noPropertiesDesc}
           </p>
           <Link
             href="/properties/new"
             className="bg-emerald-600 text-white px-6 py-2.5 rounded-lg hover:bg-emerald-700 font-medium inline-block"
           >
-            Add First Property
+            {t.dashboard.addFirst}
           </Link>
         </div>
       ) : (
@@ -55,7 +84,6 @@ export default async function DashboardPage() {
               href={`/properties/${property.id}`}
               className="bg-white rounded-xl border hover:shadow-md transition-shadow overflow-hidden group"
             >
-              {/* Thumbnail */}
               <div className="h-40 bg-gray-100 relative">
                 {property.images[0] ? (
                   <img
@@ -65,8 +93,18 @@ export default async function DashboardPage() {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-300">
-                    <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                      className="w-12 h-12"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                 )}

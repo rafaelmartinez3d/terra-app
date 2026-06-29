@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { useT } from "@/lib/i18n/LanguageContext";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useT();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,12 +31,11 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Registration failed.");
+        setError(data.error || t.auth.genericError);
         setLoading(false);
         return;
       }
 
-      // Auto sign in after registration
       const result = await signIn("credentials", {
         email,
         password,
@@ -41,24 +43,25 @@ export default function RegisterPage() {
       });
 
       if (result?.error) {
-        setError("Account created but sign in failed. Please log in.");
+        setError(t.auth.genericError);
       } else {
         router.push("/dashboard");
         router.refresh();
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setError(t.auth.genericError);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border">
-      <h1 className="text-2xl font-bold text-center mb-2">Terra App</h1>
-      <p className="text-gray-500 text-center mb-8">
-        Create your agent account
-      </p>
+    <div className="bg-white p-8 rounded-xl shadow-sm border relative">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+      <h1 className="text-2xl font-bold text-center mb-2">{t.common.appName}</h1>
+      <p className="text-gray-500 text-center mb-8">{t.auth.registerTitle}</p>
 
       {error && (
         <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm">
@@ -69,7 +72,7 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium mb-1">
-            Full Name
+            {t.auth.fullName}
           </label>
           <input
             id="name"
@@ -84,7 +87,7 @@ export default function RegisterPage() {
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-1">
-            Email
+            {t.auth.email}
           </label>
           <input
             id="email"
@@ -99,7 +102,7 @@ export default function RegisterPage() {
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium mb-1">
-            Password
+            {t.auth.password}
           </label>
           <input
             id="password"
@@ -109,14 +112,14 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            placeholder="Min 6 characters"
+            placeholder={t.auth.passwordMinLength}
           />
         </div>
 
         <div>
           <label htmlFor="phone" className="block text-sm font-medium mb-1">
-            Phone{" "}
-            <span className="text-gray-400 text-xs">(optional)</span>
+            {t.auth.phone}{" "}
+            <span className="text-gray-400 text-xs">({t.auth.phoneOptional})</span>
           </label>
           <input
             id="phone"
@@ -133,14 +136,14 @@ export default function RegisterPage() {
           disabled={loading}
           className="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-medium"
         >
-          {loading ? "Creating account..." : "Create Account"}
+          {loading ? t.auth.creatingAccount : t.auth.registerButton}
         </button>
       </form>
 
       <p className="text-center text-sm text-gray-500 mt-6">
-        Already have an account?{" "}
+        {t.auth.hasAccount}{" "}
         <Link href="/login" className="text-emerald-600 hover:underline">
-          Sign in
+          {t.common.signIn}
         </Link>
       </p>
     </div>
