@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  phone        String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  properties   Property[]
+  priceChanges PriceHistory[]
+
+  @@map("users")
+}
+
+model Location {
+  id       Int     @id @default(autoincrement())
+  country  String
+  state    String
+  city     String
+  ibgeCode String? @map("ibge_code")
+
+  properties Property[]
+
+  @@map("locations")
+}
+
+model Property {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  locationId   Int      @map("location_id")
+  address      String
+  boundary     String   // GeoJSON polygon stored as text
+  areaM2       Float    @map("area_m2")
+  costValue    Float    @map("cost_value")
+  costCurrency String   @default("BRL") @map("cost_currency")
+  costPerM2    Float    @map("cost_per_m2")
+  contactName  String   @map("contact_name")
+  contactPhone String   @map("contact_phone")
+  contactEmail String   @map("contact_email")
+  agentId      String   @map("agent_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  location     Location       @relation(fields: [locationId], references: [id])
+  agent        User           @relation(fields: [agentId], references: [id])
+  images       PropertyImage[]
+  priceHistory PriceHistory[]
+
+  @@map("properties")
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid())
+  propertyId String   @map("property_id")
+  url        String
+  order      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_images")
+}
+
+model PriceHistory {
+  id         String   @id @default(uuid())
+  propertyId String   @map("property_id")
+  value      Float
+  currency   String   @default("BRL")
+  recordedAt DateTime @default(now()) @map("recorded_at")
+  changedBy  String   @map("changed_by")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [changedBy], references: [id])
+
+  @@map("price_history")
+}
